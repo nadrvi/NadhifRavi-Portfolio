@@ -5,9 +5,6 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
-// ==========================================
-// KOMPONEN ANIMASI SCROLL
-// ==========================================
 function FadeInSection({
   children,
   delay = 0,
@@ -26,7 +23,7 @@ function FadeInSection({
         });
       },
       { threshold: 0.1 },
-    ); 
+    );
 
     const currentRef = domRef.current;
     if (currentRef) observer.observe(currentRef);
@@ -49,7 +46,6 @@ function FadeInSection({
   );
 }
 
-// Tipe data
 type Mockup = {
   src: string;
   imageStyle: string;
@@ -65,9 +61,15 @@ type Project = {
   hasPopUp?: boolean;
 };
 
-// ==========================================
-// 1. DATA PROYEK
-// ==========================================
+type Certificate = {
+  id: string;
+  title: string;
+  issuer: string;
+  year: string;
+  images: string[];
+  hasPopUp?: boolean;
+};
+
 const projectsData: Project[] = [
   {
     id: "healthify",
@@ -280,20 +282,48 @@ const projectsData: Project[] = [
   },
 ];
 
-// ==========================================
-// 2. KOMPONEN KARTU PROYEK (Reusable)
-// ==========================================
+const certificatesData: Certificate[] = [
+  {
+    id: "Dicoding-bundle",
+    title: "IT Fundamentals & Software Engineering Path",
+    issuer: "Dicoding Indonesia",
+    year: "2026",
+    hasPopUp: true,
+    images: [
+      "/Certificates/Financial_certificate.png",
+      "/Certificates/Programmin_logic.png",
+      "/Certificates/web_program.png",
+      "/Certificates/AWS.png",
+      "/Certificates/Software_develop.png",
+    ],
+  },
+  {
+    id: "naspo-gold-medal",
+    title:
+      "Gold Medalist - National Applied Science Project Olympiad (Energy Category)",
+    issuer: "IYSA & Institut Teknologi Sepuluh Nopember (ITS)",
+    year: "2023",
+    hasPopUp: true,
+    images: ["/Certificates/sertifikat-penghargaan-NASPO.jpg"],
+  },
+  {
+    id: "isqo-biology-finalist",
+    title:
+      "National Finalist - International Science Qualification Olympiad (Biology)",
+    issuer: "Edu Expo & ILTI",
+    year: "2023",
+    hasPopUp: true,
+    images: ["/Certificates/EDU-EXPO-BIOLOGI.jpg"],
+  },
+];
+
 function ProjectCard({ project }: { project: Project }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  // isModalOpen = komponen ke-mount atau nggak
-  // isModalVisible = state animasi (dipisah biar bisa animasi keluar sebelum unmount)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  // mounted -> mastiin createPortal cuma jalan di client (document belum ada pas SSR)
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -324,16 +354,10 @@ function ProjectCard({ project }: { project: Project }) {
     window.setTimeout(() => setIsModalOpen(false), 300);
   };
 
-  const handleCardClick = () => {
-    openModal();
-  };
-
   useEffect(() => {
     if (!isModalOpen) return;
-
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeModal();
       if (e.key === "ArrowRight" && project.mockups.length > 1) {
@@ -348,7 +372,6 @@ function ProjectCard({ project }: { project: Project }) {
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKeyDown);
@@ -360,7 +383,7 @@ function ProjectCard({ project }: { project: Project }) {
     <>
       <div
         className={`group/card cursor-pointer flex flex-col ${project.hasPopUp ? "cursor-zoom-in" : ""} `}
-        onClick={handleCardClick}
+        onClick={openModal}
       >
         <div className="relative aspect-[4/3] rounded-2xl mb-4 sm:mb-6 overflow-hidden border border-slate-200 shadow-sm transition-all duration-300 group-hover/card:shadow-md group-hover/card:-translate-y-1 group/carousel">
           <div
@@ -423,7 +446,6 @@ function ProjectCard({ project }: { project: Project }) {
                   <path d="m9 18 6-6-6-6" />
                 </svg>
               </button>
-
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 opacity-100 md:opacity-0 group-hover/carousel:opacity-100 transition-opacity">
                 {project.mockups.map((_, i: number) => (
                   <div
@@ -435,7 +457,6 @@ function ProjectCard({ project }: { project: Project }) {
             </>
           )}
         </div>
-
         <h3 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2 text-slate-900">
           {project.title}
         </h3>
@@ -459,145 +480,123 @@ function ProjectCard({ project }: { project: Project }) {
         project.hasPopUp &&
         createPortal(
           <div
-            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 md:p-12 cursor-zoom-out transition-[background-color,backdrop-filter] duration-300 ease-out ${
-              isModalVisible
-                ? "bg-slate-900/95 backdrop-blur-md"
-                : "bg-slate-900/0 backdrop-blur-none"
-            }`}
+            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 md:p-12 cursor-zoom-out transition-[background-color,backdrop-filter] duration-300 ease-out ${isModalVisible ? "bg-slate-900/95 backdrop-blur-md" : "bg-slate-900/0 backdrop-blur-none"}`}
             onClick={closeModal}
           >
-          <button
-            className={`absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 sm:p-3 rounded-full backdrop-blur-md z-50 active:scale-95 transition-all duration-300 ease-out ${
-              isModalVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 -translate-y-3"
-            }`}
-            style={{ transitionDelay: isModalVisible ? "120ms" : "0ms" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              closeModal();
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="sm:w-6 sm:h-6"
+            <button
+              className={`absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 sm:p-3 rounded-full backdrop-blur-md z-50 active:scale-95 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"}`}
+              style={{ transitionDelay: isModalVisible ? "120ms" : "0ms" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                closeModal();
+              }}
             >
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-
-          <div
-            className={`relative inline-flex items-center justify-center max-w-[92vw] max-h-[85vh] cursor-default transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              isModalVisible
-                ? "opacity-100 scale-100 translate-y-0"
-                : "opacity-0 scale-90 translate-y-6"
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-1.5 sm:p-2.5 max-w-[92vw] max-h-[85vh] overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={currentIndex}
-                src={project.mockups[currentIndex].src}
-                alt={`${project.title} HD Mockup`}
-                className="modal-img-fade block max-w-[88vw] max-h-[78vh] w-auto h-auto rounded-md sm:rounded-lg object-contain"
-              />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="sm:w-6 sm:h-6"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+            <div
+              className={`relative inline-flex items-center justify-center max-w-[92vw] max-h-[85vh] cursor-default transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isModalVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-6"}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-1.5 sm:p-2.5 max-w-[92vw] max-h-[85vh] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={currentIndex}
+                  src={project.mockups[currentIndex].src}
+                  alt={`${project.title} HD Mockup`}
+                  className="modal-img-fade block max-w-[88vw] max-h-[78vh] w-auto h-auto rounded-md sm:rounded-lg object-contain"
+                />
+              </div>
+              {project.mockups.length > 1 && (
+                <>
+                  <button
+                    onClick={prevSlide}
+                    className={`absolute left-1 sm:-left-5 md:-left-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"}`}
+                    style={{
+                      transitionDelay: isModalVisible ? "150ms" : "0ms",
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="sm:w-6 sm:h-6"
+                    >
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className={`absolute right-1 sm:-right-5 md:-right-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-3"}`}
+                    style={{
+                      transitionDelay: isModalVisible ? "150ms" : "0ms",
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="sm:w-6 sm:h-6"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                  <div
+                    className={`absolute -bottom-7 sm:-bottom-9 left-1/2 -translate-x-1/2 flex gap-1.5 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+                    style={{
+                      transitionDelay: isModalVisible ? "180ms" : "0ms",
+                    }}
+                  >
+                    {project.mockups.map((_, i: number) => (
+                      <div
+                        key={i}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-
-            {project.mockups.length > 1 && (
-              <>
-                <button
-                  onClick={prevSlide}
-                  className={`absolute left-1 sm:-left-5 md:-left-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${
-                    isModalVisible
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 -translate-x-3"
-                  }`}
-                  style={{ transitionDelay: isModalVisible ? "150ms" : "0ms" }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="sm:w-6 sm:h-6"
-                  >
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                </button>
-                <button
-                  onClick={nextSlide}
-                  className={`absolute right-1 sm:-right-5 md:-right-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${
-                    isModalVisible
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 translate-x-3"
-                  }`}
-                  style={{ transitionDelay: isModalVisible ? "150ms" : "0ms" }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="sm:w-6 sm:h-6"
-                  >
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </button>
-
-                <div
-                  className={`absolute -bottom-7 sm:-bottom-9 left-1/2 -translate-x-1/2 flex gap-1.5 transition-all duration-300 ease-out ${
-                    isModalVisible
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-2"
-                  }`}
-                  style={{ transitionDelay: isModalVisible ? "180ms" : "0ms" }}
-                >
-                  {project.mockups.map((_, i: number) => (
-                    <div
-                      key={i}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <style jsx>{`
-            @keyframes modalImgFade {
-              from {
-                opacity: 0;
-                transform: scale(1.015);
+            <style jsx>{`
+              @keyframes modalImgFade {
+                from {
+                  opacity: 0;
+                  transform: scale(1.015);
+                }
+                to {
+                  opacity: 1;
+                  transform: scale(1);
+                }
               }
-              to {
-                opacity: 1;
-                transform: scale(1);
+              .modal-img-fade {
+                animation: modalImgFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
               }
-            }
-            .modal-img-fade {
-              animation: modalImgFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            }
-          `}</style>
+            `}</style>
           </div>,
           document.body,
         )}
@@ -605,16 +604,310 @@ function ProjectCard({ project }: { project: Project }) {
   );
 }
 
-// ==========================================
-// 3. HALAMAN UTAMA (Main Page)
-// ==========================================
+function CertificateCard({ cert }: { cert: Certificate }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const nextSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === cert.images.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev === 0 ? cert.images.length - 1 : prev - 1));
+  };
+
+  const openModal = () => {
+    if (!cert.hasPopUp) return;
+    setIsModalOpen(true);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsModalVisible(true));
+    });
+  };
+
+  const closeModal = () => {
+    setIsModalVisible(false);
+    window.setTimeout(() => setIsModalOpen(false), 300);
+  };
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+      if (e.key === "ArrowRight" && cert.images.length > 1) {
+        setCurrentIndex((prev) =>
+          prev === cert.images.length - 1 ? 0 : prev + 1,
+        );
+      }
+      if (e.key === "ArrowLeft" && cert.images.length > 1) {
+        setCurrentIndex((prev) =>
+          prev === 0 ? cert.images.length - 1 : prev - 1,
+        );
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModalOpen]);
+
+  return (
+    <>
+      <div
+        className={`p-4 h-full rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col group/card ${cert.hasPopUp ? "cursor-zoom-in" : "cursor-default"}`}
+        onClick={openModal}
+      >
+        <div className="relative aspect-[4/3] w-full mb-4 overflow-hidden rounded-xl border border-slate-100 bg-stone-50 group/carousel min-h-[200px]">
+          <div
+            className="flex w-full h-full transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          >
+            {cert.images.map((img, i) => (
+              <div key={i} className="relative w-full h-full flex-shrink-0">
+                <Image
+                  src={img}
+                  alt={`${cert.title} ${i}`}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
+
+          {cert.images.length > 1 && (
+            <>
+              <button
+                onClick={prevSlide}
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-sm opacity-100 md:opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-sm opacity-100 md:opacity-0 group-hover/carousel:opacity-100 transition-opacity"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 opacity-100 md:opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+                {cert.images.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full transition-all ${i === currentIndex ? "bg-slate-800 w-3" : "bg-slate-400 w-1"}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-between items-start gap-4 mb-2">
+          <h3 className="text-base font-bold text-slate-900 leading-snug flex-1">
+            {cert.title}
+          </h3>
+          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full shrink-0">
+            {cert.year}
+          </span>
+        </div>
+        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-auto">
+          {cert.issuer}
+        </p>
+      </div>
+
+      {mounted &&
+        isModalOpen &&
+        cert.hasPopUp &&
+        createPortal(
+          <div
+            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 md:p-12 cursor-zoom-out transition-[background-color,backdrop-filter] duration-300 ease-out ${isModalVisible ? "bg-slate-900/95 backdrop-blur-md" : "bg-slate-900/0 backdrop-blur-none"}`}
+            onClick={closeModal}
+          >
+            <button
+              className={`absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 sm:p-3 rounded-full backdrop-blur-md z-50 active:scale-95 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"}`}
+              style={{ transitionDelay: isModalVisible ? "120ms" : "0ms" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                closeModal();
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="sm:w-6 sm:h-6"
+              >
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+
+            <div
+              className={`relative inline-flex items-center justify-center max-w-[92vw] max-h-[85vh] cursor-default transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${isModalVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-6"}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-1.5 sm:p-2.5 max-w-[92vw] max-h-[85vh] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={currentIndex}
+                  src={cert.images[currentIndex]}
+                  alt={`${cert.title} HD`}
+                  className="modal-img-fade block max-w-[88vw] max-h-[78vh] w-auto h-auto rounded-md sm:rounded-lg object-contain"
+                />
+              </div>
+
+              {cert.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevSlide}
+                    className={`absolute left-1 sm:-left-5 md:-left-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-3"}`}
+                    style={{
+                      transitionDelay: isModalVisible ? "150ms" : "0ms",
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="sm:w-6 sm:h-6"
+                    >
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className={`absolute right-1 sm:-right-5 md:-right-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-3"}`}
+                    style={{
+                      transitionDelay: isModalVisible ? "150ms" : "0ms",
+                    }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="sm:w-6 sm:h-6"
+                    >
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                  <div
+                    className={`absolute -bottom-7 sm:-bottom-9 left-1/2 -translate-x-1/2 flex gap-1.5 transition-all duration-300 ease-out ${isModalVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
+                    style={{
+                      transitionDelay: isModalVisible ? "180ms" : "0ms",
+                    }}
+                  >
+                    {cert.images.map((_, i: number) => (
+                      <div
+                        key={i}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            <style jsx>{`
+              @keyframes modalImgFade {
+                from {
+                  opacity: 0;
+                  transform: scale(1.015);
+                }
+                to {
+                  opacity: 1;
+                  transform: scale(1);
+                }
+              }
+              .modal-img-fade {
+                animation: modalImgFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+              }
+            `}</style>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+  const [navHeight, setNavHeight] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const measure = () => {
+      if (navRef.current) setNavHeight(navRef.current.offsetHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900 font-sans select-none">
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-stone-50/80 backdrop-blur-lg border-b border-stone-200/50">
+      <nav
+        ref={navRef}
+        className="sticky top-0 z-50 bg-stone-50/80 backdrop-blur-lg border-b border-stone-200/50"
+      >
         <div className="flex justify-between items-center py-4 px-5 sm:px-8 max-w-5xl mx-auto">
           <button
             className="md:hidden p-2"
@@ -644,6 +937,9 @@ export default function Home() {
             <Link href="#about" className="hover:text-slate-900">
               About
             </Link>
+            <Link href="#certificates" className="hover:text-slate-900">
+              Certificates
+            </Link>
             <Link href="#contact" className="hover:text-slate-900">
               Contact
             </Link>
@@ -652,23 +948,51 @@ export default function Home() {
           <div className="md:hidden w-10" />
         </div>
 
-        {/* MOBILE MENU DROPDOWN */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-stone-50 border-b border-stone-200 p-5 flex flex-col gap-4 font-semibold text-slate-500">
-            <Link href="#work" onClick={() => setIsMenuOpen(false)}>
-              Work
-            </Link>
-            <Link href="#about" onClick={() => setIsMenuOpen(false)}>
-              About
-            </Link>
-            <Link href="#contact" onClick={() => setIsMenuOpen(false)}>
-              Contact
-            </Link>
-          </div>
-        )}
+        {mounted &&
+          isMenuOpen &&
+          createPortal(
+            <>
+              <div
+                className="md:hidden fixed inset-0 z-30 bg-transparent"
+                onClick={() => setIsMenuOpen(false)}
+              />
+              <div
+                className="mobile-menu-fade md:hidden fixed left-0 right-0 z-40 bg-stone-50 border-b border-slate-200 shadow-lg p-5 flex flex-col gap-4 font-semibold text-slate-500"
+                style={{ top: navHeight }}
+              >
+                <Link href="#work" onClick={() => setIsMenuOpen(false)}>
+                  Work
+                </Link>
+                <Link href="#about" onClick={() => setIsMenuOpen(false)}>
+                  About
+                </Link>
+                <Link href="#certificates" onClick={() => setIsMenuOpen(false)}>
+                  Certificates
+                </Link>
+                <Link href="#contact" onClick={() => setIsMenuOpen(false)}>
+                  Contact
+                </Link>
+              </div>
+            </>,
+            document.body,
+          )}
+        <style jsx>{`
+          @keyframes mobileMenuFade {
+            from {
+              opacity: 0;
+              transform: translateY(-8px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .mobile-menu-fade {
+            animation: mobileMenuFade 0.2s ease-out;
+          }
+        `}</style>
       </nav>
 
-      {/* HERO SECTION */}
       <header className="py-10 sm:py-16 md:py-24 px-5 sm:px-8 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center text-center md:text-left overflow-hidden">
         <div className="md:col-span-4 order-first md:order-last">
           <FadeInSection>
@@ -704,7 +1028,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* SELECTED WORK SECTION */}
       <section
         id="work"
         className="py-12 sm:py-20 md:py-24 px-5 sm:px-8 max-w-5xl mx-auto border-t border-slate-200/60 overflow-hidden"
@@ -718,7 +1041,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ABOUT & TECH STACK SECTION */}
       <section
         id="about"
         className="py-12 sm:py-20 md:py-32 px-5 sm:px-8 bg-slate-100/50 overflow-hidden border-t border-slate-200/60"
@@ -788,11 +1110,35 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
+      <section
+        id="certificates"
+        className="py-12 sm:py-20 md:py-24 px-5 sm:px-8 max-w-5xl mx-auto border-t border-slate-200/60 overflow-hidden"
+      >
+        <div className="text-center md:text-left mb-10 md:mb-12">
+          <FadeInSection>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 text-slate-900">
+              Licenses & Certifications
+            </h2>
+            <p className="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto md:mx-0">
+              Documenting a journey of professional growth, academic
+              exploration, and purpose-driven initiatives.
+            </p>
+          </FadeInSection>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {certificatesData.map((cert, index) => (
+            <FadeInSection key={cert.id} delay={index * 100}>
+              <CertificateCard cert={cert} />
+            </FadeInSection>
+          ))}
+        </div>
+      </section>
+
       <FadeInSection>
         <footer
           id="contact"
-          className="py-20 sm:py-28 md:py-40 px-5 sm:px-8 max-w-5xl mx-auto text-center overflow-hidden"
+          className="py-20 sm:py-28 md:py-40 px-5 sm:px-8 max-w-5xl mx-auto text-center overflow-hidden border-t border-slate-200/60"
         >
           <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold mb-4 sm:mb-8 tracking-tight text-slate-900">
             Let&apos;s build something great together.
