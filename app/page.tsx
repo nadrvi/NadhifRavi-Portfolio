@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 // ==========================================
 // KOMPONEN ANIMASI SCROLL
@@ -285,7 +286,16 @@ const projectsData: Project[] = [
 // ==========================================
 function ProjectCard({ project }: { project: Project }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  // isModalOpen = komponen ke-mount atau nggak
+  // isModalVisible = state animasi (dipisah biar bisa animasi keluar sebelum unmount)
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  // mounted -> mastiin createPortal cuma jalan di client (document belum ada pas SSR)
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const nextSlide = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -301,11 +311,53 @@ function ProjectCard({ project }: { project: Project }) {
     );
   };
 
-  const handleCardClick = () => {
-    if (project.hasPopUp) {
-      setIsModalOpen(true);
-    }
+  const openModal = () => {
+    if (!project.hasPopUp) return;
+    setIsModalOpen(true);
+    // double rAF -> mastiin browser udah render frame awal (opacity-0/scale-90)
+    // dulu sebelum di-transition ke state akhir, biar animasinya kepicu mulus
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsModalVisible(true));
+    });
   };
+
+  const closeModal = () => {
+    setIsModalVisible(false);
+    window.setTimeout(() => setIsModalOpen(false), 300);
+  };
+
+  const handleCardClick = () => {
+    openModal();
+  };
+
+  // Lock scroll body + dukungan tombol ESC & arrow key selama modal kebuka
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+      if (e.key === "ArrowRight" && project.mockups.length > 1) {
+        setCurrentIndex((prev) =>
+          prev === project.mockups.length - 1 ? 0 : prev + 1,
+        );
+      }
+      if (e.key === "ArrowLeft" && project.mockups.length > 1) {
+        setCurrentIndex((prev) =>
+          prev === 0 ? project.mockups.length - 1 : prev - 1,
+        );
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isModalOpen]);
 
   return (
     <>
@@ -406,17 +458,39 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
       </div>
 
-      {/* POP-UP MODAL - Mobile Fixes (Touch targets bigger) */}
-      {isModalOpen && project.hasPopUp && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-2 sm:p-4 md:p-12 cursor-zoom-out"
-          onClick={() => setIsModalOpen(false)}
-        >
+      {/* ========================================== */}
+      {/* POP-UP MODAL (LIGHTBOX) - DIPERBAIKI         */}
+      {/* - di-portal ke document.body, jadi gak ke-   */}
+      {/*   jebak di dalam ancestor yang punya transform*/}
+      {/*   (FadeInSection) -> ini biang kerok modal    */}
+      {/*   sebelumnya gak full-screen/gak center       */}
+      {/* - Selalu center sempurna di layar             */}
+      {/* - Animasi masuk/keluar: fade + scale + easing */}
+      {/*   cubic-bezier ala Linear/Vercel (smooth)     */}
+      {/* - Crossfade halus tiap ganti gambar           */}
+      {/* ========================================== */}
+      {mounted &&
+        isModalOpen &&
+        project.hasPopUp &&
+        createPortal(
+          <div
+            className={`fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 md:p-12 cursor-zoom-out transition-[background-color,backdrop-filter] duration-300 ease-out ${
+              isModalVisible
+                ? "bg-slate-900/95 backdrop-blur-md"
+                : "bg-slate-900/0 backdrop-blur-none"
+            }`}
+            onClick={closeModal}
+          >
           <button
-            className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-2.5 sm:p-3 rounded-full backdrop-blur-md z-50 active:scale-95"
+            className={`absolute top-4 right-4 sm:top-6 sm:right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 sm:p-3 rounded-full backdrop-blur-md z-50 active:scale-95 transition-all duration-300 ease-out ${
+              isModalVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-3"
+            }`}
+            style={{ transitionDelay: isModalVisible ? "120ms" : "0ms" }}
             onClick={(e) => {
               e.stopPropagation();
-              setIsModalOpen(false);
+              closeModal();
             }}
           >
             <svg
@@ -437,22 +511,37 @@ function ProjectCard({ project }: { project: Project }) {
           </button>
 
           <div
-            className="relative w-full max-w-6xl h-[85vh] md:h-full flex items-center justify-center cursor-default"
+            className={`relative inline-flex items-center justify-center max-w-[92vw] max-h-[85vh] cursor-default transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              isModalVisible
+                ? "opacity-100 scale-100 translate-y-0"
+                : "opacity-0 scale-90 translate-y-6"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
-              src={project.mockups[currentIndex].src}
-              alt={`${project.title} HD Mockup`}
-              fill
-              className="object-contain"
-              sizes="100vw"
-            />
+            {/* "Frame" putih di sekitar gambar biar keliatan rapi & terpusat */}
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-1.5 sm:p-2.5 max-w-[92vw] max-h-[85vh] overflow-hidden">
+              {/* key={currentIndex} -> tiap ganti slide, elemen ke-remount   */}
+              {/* sehingga animasi CSS "modalImgFade" otomatis replay -> efek */}
+              {/* crossfade halus tanpa perlu state JS tambahan              */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={currentIndex}
+                src={project.mockups[currentIndex].src}
+                alt={`${project.title} HD Mockup`}
+                className="modal-img-fade block max-w-[88vw] max-h-[78vh] w-auto h-auto rounded-md sm:rounded-lg object-contain"
+              />
+            </div>
 
             {project.mockups.length > 1 && (
               <>
                 <button
                   onClick={prevSlide}
-                  className="absolute left-0 sm:left-4 md:-left-12 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full transition-all active:scale-95"
+                  className={`absolute left-1 sm:-left-5 md:-left-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${
+                    isModalVisible
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 -translate-x-3"
+                  }`}
+                  style={{ transitionDelay: isModalVisible ? "150ms" : "0ms" }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -471,7 +560,12 @@ function ProjectCard({ project }: { project: Project }) {
                 </button>
                 <button
                   onClick={nextSlide}
-                  className="absolute right-0 sm:right-4 md:-right-12 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full transition-all active:scale-95"
+                  className={`absolute right-1 sm:-right-5 md:-right-14 top-1/2 -translate-y-1/2 text-white/50 hover:text-white bg-black/50 hover:bg-black/80 p-3 sm:p-4 rounded-full active:scale-95 transition-all duration-300 ease-out ${
+                    isModalVisible
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 translate-x-3"
+                  }`}
+                  style={{ transitionDelay: isModalVisible ? "150ms" : "0ms" }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -488,11 +582,44 @@ function ProjectCard({ project }: { project: Project }) {
                     <path d="m9 18 6-6-6-6" />
                   </svg>
                 </button>
+
+                <div
+                  className={`absolute -bottom-7 sm:-bottom-9 left-1/2 -translate-x-1/2 flex gap-1.5 transition-all duration-300 ease-out ${
+                    isModalVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-2"
+                  }`}
+                  style={{ transitionDelay: isModalVisible ? "180ms" : "0ms" }}
+                >
+                  {project.mockups.map((_, i: number) => (
+                    <div
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? "bg-white w-4" : "bg-white/40 w-1.5"}`}
+                    />
+                  ))}
+                </div>
               </>
             )}
           </div>
-        </div>
-      )}
+
+          <style jsx>{`
+            @keyframes modalImgFade {
+              from {
+                opacity: 0;
+                transform: scale(1.015);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1);
+              }
+            }
+            .modal-img-fade {
+              animation: modalImgFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+          `}</style>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
