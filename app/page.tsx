@@ -22,12 +22,11 @@ function FadeInSection({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // Kalau masuk layar -> visible, kalau keluar layar -> hidden lagi
           setVisible(entry.isIntersecting);
         });
       },
       { threshold: 0.1 },
-    ); // Muncul kalau 10% bagian elemen udah kelihatan
+    ); 
 
     const currentRef = domRef.current;
     if (currentRef) observer.observe(currentRef);
@@ -294,6 +293,7 @@ function ProjectCard({ project }: { project: Project }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -314,8 +314,6 @@ function ProjectCard({ project }: { project: Project }) {
   const openModal = () => {
     if (!project.hasPopUp) return;
     setIsModalOpen(true);
-    // double rAF -> mastiin browser udah render frame awal (opacity-0/scale-90)
-    // dulu sebelum di-transition ke state akhir, biar animasinya kepicu mulus
     requestAnimationFrame(() => {
       requestAnimationFrame(() => setIsModalVisible(true));
     });
@@ -330,7 +328,6 @@ function ProjectCard({ project }: { project: Project }) {
     openModal();
   };
 
-  // Lock scroll body + dukungan tombol ESC & arrow key selama modal kebuka
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -386,7 +383,6 @@ function ProjectCard({ project }: { project: Project }) {
             ))}
           </div>
 
-          {/* Tombol Navigasi - Mobile UI Fix: opacity-100 di layar HP, sembunyi di Desktop kecuali di-hover */}
           {project.mockups.length > 1 && (
             <>
               <button
@@ -458,17 +454,6 @@ function ProjectCard({ project }: { project: Project }) {
         </div>
       </div>
 
-      {/* ========================================== */}
-      {/* POP-UP MODAL (LIGHTBOX) - DIPERBAIKI         */}
-      {/* - di-portal ke document.body, jadi gak ke-   */}
-      {/*   jebak di dalam ancestor yang punya transform*/}
-      {/*   (FadeInSection) -> ini biang kerok modal    */}
-      {/*   sebelumnya gak full-screen/gak center       */}
-      {/* - Selalu center sempurna di layar             */}
-      {/* - Animasi masuk/keluar: fade + scale + easing */}
-      {/*   cubic-bezier ala Linear/Vercel (smooth)     */}
-      {/* - Crossfade halus tiap ganti gambar           */}
-      {/* ========================================== */}
       {mounted &&
         isModalOpen &&
         project.hasPopUp &&
@@ -518,11 +503,7 @@ function ProjectCard({ project }: { project: Project }) {
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* "Frame" putih di sekitar gambar biar keliatan rapi & terpusat */}
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-1.5 sm:p-2.5 max-w-[92vw] max-h-[85vh] overflow-hidden">
-              {/* key={currentIndex} -> tiap ganti slide, elemen ke-remount   */}
-              {/* sehingga animasi CSS "modalImgFade" otomatis replay -> efek */}
-              {/* crossfade halus tanpa perlu state JS tambahan              */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={currentIndex}
@@ -656,7 +637,6 @@ export default function Home() {
             <Link href="/">Nadhif Ravi</Link>
           </div>
 
-          {/* NAV LINKS (Sembunyi di sm, Muncul di md) */}
           <div className="hidden md:flex gap-8 font-semibold text-sm text-slate-500">
             <Link href="#work" className="hover:text-slate-900">
               Work
@@ -669,7 +649,6 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Spacer biar nama lu tetep presisi di tengah di HP */}
           <div className="md:hidden w-10" />
         </div>
 
