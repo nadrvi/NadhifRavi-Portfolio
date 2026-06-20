@@ -625,7 +625,7 @@ export default function Home() {
               </h2>
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed mx-auto md:mx-0 max-w-xl px-2 sm:px-0">
                 Selain mendalami keilmuan di Sistem Informasi, pengalaman terjun
-                langsung ke industri mengajarkan gue banyak hal praktis. Mulai
+                langsung ke industri mengajarkan saya banyak hal praktis. Mulai
                 dari memangkas waktu load halaman web hingga 35%, membangun
                 backend serverless yang responsif, sampai mengelola ribuan data
                 transaksi agar sistem tetap rapi, akurat, dan terukur.
