@@ -310,7 +310,7 @@ function ProjectCard({ project }: { project: Project }) {
   return (
     <>
       <div
-        className={`group/card cursor-pointer flex flex-col ${project.hasPopUp ? "cursor-zoom-in" : ""}`}
+        className={`group/card cursor-pointer flex flex-col ${project.hasPopUp ? "cursor-zoom-in" : ""} `}
         onClick={handleCardClick}
       >
         <div className="relative aspect-[4/3] rounded-2xl mb-4 sm:mb-6 overflow-hidden border border-slate-200 shadow-sm transition-all duration-300 group-hover/card:shadow-md group-hover/card:-translate-y-1 group/carousel">
@@ -504,11 +504,10 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-stone-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-stone-50 text-slate-900 font-sans select-none">
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-stone-50/80 backdrop-blur-lg border-b border-stone-200/50">
         <div className="flex justify-between items-center py-4 px-5 sm:px-8 max-w-5xl mx-auto">
-          {/* BURGER MENU (Tampil di sm, sembunyi di md) */}
           <button
             className="md:hidden p-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -526,7 +525,6 @@ export default function Home() {
             </div>
           </button>
 
-          {/* NAMA LU (Tengah di sm, Kiri di md) */}
           <div className="font-extrabold text-lg tracking-tighter absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0">
             <Link href="/">Nadhif Ravi</Link>
           </div>
@@ -584,7 +582,7 @@ export default function Home() {
           <FadeInSection delay={150}>
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight leading-tight mb-4 sm:mb-6 md:mb-8 text-slate-900">
               Information Systems Student, Full-Stack Developer & Data
-              Enthusiast.
+              Enthusiast
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-slate-500 max-w-2xl mx-auto md:mx-0 mb-6 sm:mb-8 md:mb-12 leading-relaxed px-2 sm:px-0">
               Transforming complex workflows into intuitive digital experiences
